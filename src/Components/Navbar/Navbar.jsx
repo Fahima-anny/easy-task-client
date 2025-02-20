@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
 
-  const { googleLogin, signOutUser } = useContext(AuthContext) ;
+  const { googleLogin, signOutUser, user } = useContext(AuthContext) ;
   const navigate = useNavigate()
 
 const handleGoogleLogin = () => {
@@ -31,8 +31,9 @@ const handleLogout = () => {
 }
   
     return (
-        <div className="bg-accent">
-            <div className="navbar  max-w-7xl mx-auto">
+      <div className="fixed z-50 backdrop-blur-sm bg-black/20 w-full">
+        <div className="">
+            <div className="navbar p-0 max-w-7xl mx-auto">
   <div className="navbar-start">
     <div className="dropdown">
       <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
@@ -85,14 +86,21 @@ const handleLogout = () => {
     </ul>
   </div>
   <div className="navbar-end">
-    <button 
-    onClick={handleGoogleLogin}
-    className="btn">Login </button>
+{user ? <>
     <button 
     onClick={handleLogout}
-    className="btn">Log Out</button>
+    className="btn ">Log Out</button>
+</>
+:
+<>
+<button 
+    onClick={handleGoogleLogin}
+    className="btn  px-5 mr-2">Login </button>
+</>
+}
   </div>
 </div>
+        </div>
         </div>
     );
 };
