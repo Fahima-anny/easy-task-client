@@ -1,8 +1,11 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { IoMdCloseCircle } from "react-icons/io";
 import { AuthContext } from "./Components/Navbar/Authentications/AuthContext";
 import Swal from "sweetalert2";
 import useAxiosPublic from "./Components/Navbar/Authentications/AxiosPublic";
+import { useQuery } from "@tanstack/react-query";
+import { BiSolidEdit } from "react-icons/bi";
+import { RiDeleteBin6Line } from "react-icons/ri";
 
 
 
@@ -12,7 +15,32 @@ function App() {
   const [showModal, setShowModal] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const axiosPublic = useAxiosPublic() ;
+  const axiosPublic = useAxiosPublic();
+  const [todo, setTodo] = useState(null);
+  const [inProgress, setInProgress] = useState(null);
+  const [done, setDone] = useState(null);
+
+
+  const { data, isPending: allTasksPending, refetch } = useQuery({
+    queryKey: [user.email, 'allTasks'],
+    queryFn: async () => {
+      const res = await axiosPublic.get(`/tasks?email=${user.email}`);
+      console.log(res?.data);
+
+      const todoTasks = res.data.filter(task => task.category === 'todo')
+      setTodo(todoTasks);
+      // console.log(todoTasks);
+
+      const inProgressTasks = res.data.filter(task => task.category === 'in progress')
+      setInProgress(inProgressTasks);
+
+      const doneTasks = res.data.filter(task => task.category === 'done')
+      setDone(doneTasks);
+      return res?.data
+    },
+    enabled: !!user?.email
+  })
+
 
   const handleTitleChange = (e) => {
     if (e.target.value.length <= 50) {
@@ -37,31 +65,87 @@ function App() {
     const time = Date.now();
     const userEmail = user.email;
 
-
     const taskInfo = {
       title, description, category, time, userEmail
     }
 
     axiosPublic.post("/tasks", taskInfo)
-    .then(res => {
+      .then(res => {
         console.log(res.data);
-        if(res.data.insertedId){
-            Swal.fire({
-                icon: "success",
-                title: "Your work has been saved",
-                showConfirmButton: false,
-                timer: 1500
-              });
-              // refetch() ;
-              form.reset() ;
-              setTitle("");
-              setDescription("");
-              setShowModal(false) 
+        if (res.data.insertedId) {
+          Swal.fire({
+            icon: "success",
+            title: "Your work has been saved",
+            showConfirmButton: false,
+            timer: 1500
+          });
+          // refetch() ;
+          form.reset();
+          setTitle("");
+          setDescription("");
+          setShowModal(false);
+          refetch();
         }
-    })
-    .catch(er => console.log(er))
-    
-    console.log(taskInfo);
+      })
+      .catch(er => console.log(er))
+    // console.log(taskInfo);
+  }
+
+  const handleEdit = () => {
+
+  }
+
+  const handleDelete = (task) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        axiosPublic.delete(`/tasks/${task._id}`)
+          .then(res => {
+            console.log(res.data);
+            if (res.data.deletedCount > 0) {
+              refetch() ;
+              Swal.fire({
+                title: "Deleted!",
+                text: "Your file has been deleted.",
+                icon: "success"
+              });
+            }
+          })
+
+      }
+    });
+  }
+
+  //     useEffect(()=> {
+  //   axiosPublic.get(`/tasks?email=${user.email}`)
+  //   .then(res => {
+  //     console.log(res.data);
+
+  //     const todoTasks = res.data.filter(task => task.category === 'todo')
+  //     setTodo(todoTasks);
+  //     // console.log(todoTasks);
+
+  //     const inProgressTasks = res.data.filter(task => task.category === 'in progress')
+  //     setInProgress(inProgressTasks);
+
+  //     const doneTasks = res.data.filter(task => task.category === 'done')
+  //     setDone(doneTasks);
+  //   })
+  //   .catch(er => console.log(er))
+  // }, [])
+
+
+  if (allTasksPending) {
+    return <div className="min-h-[80vh] flex justify-center items-center">
+      <span className="loading loading-dots loading-lg"></span>
+    </div>
   }
 
   return (
@@ -77,14 +161,81 @@ function App() {
           <div className="">
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-base-content">
-              <div className="border border-gray-500 rounded-2xl p-3 space-y-3">
-                <h2 className="text-2xl font-bold">To-Do</h2>
-                <button
-                  onClick={handleOpenModal}
-                  className="btn btn-outline">Add +</button>
+
+              {/* todo  */}
+              <div>
+                <div className="border border-gray-500 rounded-2xl p-3 space-y-3 min-h-[50vh] bg-base-100">
+
+                  <h2 className="text-2xl font-bold text-center">To-Do</h2>
+                  <div className="divider "></div>
+                  <button
+                    onClick={handleOpenModal}
+                    className="btn btn-outline w-full rounded-xl">Add +</button>
+                  <div className="flex flex-col gap-3 text-base-content">
+                    {
+                      todo?.map(task =>
+                        <div
+                          key={task._id}
+                          className="border rounded-xl p-2 flex gap-2 justify-between"
+                        >
+                          <div>
+                            <p className="font-bold text-accent text-xl">{task.title}</p>
+                            <p className="text-gray-500">{task.description}</p>
+                          </div>
+                          <div className="text-xl flex flex-col ">
+                            <BiSolidEdit
+                              onClick={() => handleEdit(task)}
+                              className="mt-2 cursor-pointer" />
+                            <RiDeleteBin6Line
+                              onClick={() => handleDelete(task)}
+                              className="mt-3 text-red-600 cursor-pointer" />
+                          </div>
+                        </div>
+
+                      )
+                    }
+                  </div>
+                </div>
               </div>
-              <div>2</div>
-              <div>3</div>
+
+              {/* in progress */}
+              <div>
+                <div className="border border-gray-500 rounded-2xl p-3 space-y-3 min-h-[50vh] bg-base-100">
+                  <h2 className="text-2xl font-bold text-center">In Progress</h2>
+                  <div className="divider "></div>
+                  <div className="flex flex-col gap-3 text-base-content">
+                    {
+                      inProgress?.map(task => <div
+                        key={task._id}
+                        className="border rounded-xl p-2"
+                      >
+                        <p className="font-bold text-accent text-xl">{task.title}</p>
+                        <p className="text-gray-500">{task.description}</p>
+                      </div>)
+                    }
+                  </div>
+                </div>
+              </div>
+
+              {/* done  */}
+              <div>
+                <div className="border border-gray-500 rounded-2xl p-3 space-y-3 min-h-[50vh] bg-base-100">
+                  <h2 className="text-2xl font-bold text-center">Done</h2>
+                  <div className="divider "></div>
+                  <div className="flex flex-col gap-3 text-base-content">
+                    {
+                      done?.map(task => <div
+                        key={task._id}
+                        className="border rounded-xl p-2"
+                      >
+                        <p className="font-bold text-accent text-xl">{task.title}</p>
+                        <p className="text-gray-500">{task.description}</p>
+                      </div>)
+                    }
+                  </div>
+                </div>
+              </div>
+
             </div>
 
           </div>
@@ -123,9 +274,9 @@ function App() {
                       onChange={handleTitleChange}
                       className="input input-bordered"
                       required >
-                        </input>
-                       <p 
-                    className="text-sm text-gray-500 absolute right-2 -top-0"
+                    </input>
+                    <p
+                      className="text-sm text-gray-500 absolute right-2 -top-0"
                     >{50 - title.length}/50</p>
                   </div>
                   <div className="form-control relative">
@@ -138,8 +289,8 @@ function App() {
                       name="description"
                       className="textarea textarea-bordered"
                       required />
-                   <p 
-                    className="text-sm text-gray-500 absolute right-2 -top-0"
+                    <p
+                      className="text-sm text-gray-500 absolute right-2 -top-0"
                     >{200 - description.length}/200</p>
                   </div>
                   <div className="form-control mt-6">
