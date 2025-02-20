@@ -1,6 +1,35 @@
+import { useContext } from "react";
+import { AuthContext } from "./Authentications/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 
 const Navbar = () => {
+
+  const { googleLogin, signOutUser } = useContext(AuthContext) ;
+  const navigate = useNavigate()
+
+const handleGoogleLogin = () => {
+googleLogin()
+.then(res => {
+  console.log(res.user);
+  navigate("/")
+})
+.catch(Er => {
+  console.log(Er);
+})
+}
+
+
+const handleLogout = () => {
+  signOutUser()
+.then(res => {
+  console.log(res);
+})
+.catch(Er => {
+  console.log(Er);
+})
+}
+  
     return (
         <div className="bg-accent">
             <div className="navbar  max-w-7xl mx-auto">
@@ -56,7 +85,12 @@ const Navbar = () => {
     </ul>
   </div>
   <div className="navbar-end">
-    <a className="btn">Login </a>
+    <button 
+    onClick={handleGoogleLogin}
+    className="btn">Login </button>
+    <button 
+    onClick={handleLogout}
+    className="btn">Log Out</button>
   </div>
 </div>
         </div>
