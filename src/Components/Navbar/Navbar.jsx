@@ -1,18 +1,43 @@
 import { useContext } from "react";
 import { AuthContext } from "./Authentications/AuthContext";
 import { useNavigate } from "react-router-dom";
+import useAxiosPublic from "./Authentications/AxiosPublic";
 
 
 const Navbar = () => {
 
-  const { googleLogin, signOutUser, user } = useContext(AuthContext) ;
+  const { googleLogin, signOutUser, user, setProfilePic, setProfileName, profilePic, profileName } = useContext(AuthContext) ;
+  const axiosPublic = useAxiosPublic() ;
   const navigate = useNavigate()
 
 const handleGoogleLogin = () => {
 googleLogin()
 .then(res => {
-  console.log(res.user);
+  console.log(res.user.email);
   navigate("/")
+
+  const userInfo = {
+    name : res.user.displayName,
+    email : res.user.email,
+    userID : res.user.uid,
+    photo : res.user.photoURL,
+  }
+
+  setProfilePic(res.user.photoURL);
+  setProfileName(res.user.displayName);
+
+  axiosPublic.get(`/users?email=${res.user.email}`)
+  .then(response => {
+    console.log(response.data);
+    if(!response.data){
+      axiosPublic.post("/users", userInfo)
+      .then(res => {
+        console.log(res);
+      })
+      .catch(er => console.log(er))
+    }
+  })
+  .catch(er => console.log(er))
 })
 .catch(Er => {
   console.log(Er);

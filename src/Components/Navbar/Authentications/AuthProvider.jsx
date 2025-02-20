@@ -10,6 +10,8 @@ const AuthProvider = ({ children }) => {
 
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [profilePic, setProfilePic] = useState(null);
+    const [profileName, setProfileName] = useState(null);
     const googleProvider = new GoogleAuthProvider();
     const auth = getAuth(app)
 
@@ -30,7 +32,11 @@ const AuthProvider = ({ children }) => {
         signOutUser,
         googleLogin,
         user,
-        loading
+        loading,
+        setProfilePic,
+        setProfileName,
+        profilePic,
+        profileName
     }
 
     useEffect(() => {
