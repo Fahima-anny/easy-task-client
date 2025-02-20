@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useContext, useEffect, useState } from "react";
 import { IoMdCloseCircle } from "react-icons/io";
 import { AuthContext } from "./Components/Navbar/Authentications/AuthContext";
@@ -12,13 +13,15 @@ import { RiDeleteBin6Line } from "react-icons/ri";
 function App() {
 
   const { user } = useContext(AuthContext);
-  const [showModal, setShowModal] = useState(false);
+  const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const axiosPublic = useAxiosPublic();
   const [todo, setTodo] = useState(null);
   const [inProgress, setInProgress] = useState(null);
   const [done, setDone] = useState(null);
+  const [editTask, setEditTask] = useState(null);
+  const [editTaskModal, setEditTaskModal] = useState(false) ;
 
 
   const { data, isPending: allTasksPending, refetch } = useQuery({
@@ -41,7 +44,6 @@ function App() {
     enabled: !!user?.email
   })
 
-
   const handleTitleChange = (e) => {
     if (e.target.value.length <= 50) {
       setTitle(e.target.value);
@@ -53,9 +55,8 @@ function App() {
     }
   };
   const handleOpenModal = () => {
-    setShowModal(true)
+    setShowAddTaskModal(true)
   }
-
   const handleAddTask = (e) => {
     e.preventDefault();
     const form = e.target;
@@ -68,14 +69,13 @@ function App() {
     const taskInfo = {
       title, description, category, time, userEmail
     }
-
     axiosPublic.post("/tasks", taskInfo)
       .then(res => {
         console.log(res.data);
         if (res.data.insertedId) {
           Swal.fire({
             icon: "success",
-            title: "Your work has been saved",
+            title: "New task added",
             showConfirmButton: false,
             timer: 1500
           });
@@ -83,18 +83,13 @@ function App() {
           form.reset();
           setTitle("");
           setDescription("");
-          setShowModal(false);
+          setShowAddTaskModal(false);
           refetch();
         }
       })
       .catch(er => console.log(er))
     // console.log(taskInfo);
   }
-
-  const handleEdit = () => {
-
-  }
-
   const handleDelete = (task) => {
     Swal.fire({
       title: "Are you sure?",
@@ -110,7 +105,7 @@ function App() {
           .then(res => {
             console.log(res.data);
             if (res.data.deletedCount > 0) {
-              refetch() ;
+              refetch();
               Swal.fire({
                 title: "Deleted!",
                 text: "Your file has been deleted.",
@@ -121,6 +116,43 @@ function App() {
 
       }
     });
+  }
+  const handleEdit = (task) => {
+    setEditTask(task);
+    setTitle(task.title); 
+    setDescription(task.description); 
+    setEditTaskModal(true);
+  };
+  const handleEditTask = (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const title = form.title.value;
+    const description = form.description.value;
+
+    const editedTaskInfo = {
+      title, description
+    }
+
+    axiosPublic.put(`/tasks/${editTask._id}`, editedTaskInfo)
+      .then(res => {
+        console.log(res.data);
+        if (res.data.matchedCount > 0) {
+          Swal.fire({
+            icon: "success",
+            title: "Task Updated",
+            showConfirmButton: false,
+            timer: 1500
+          });
+          // refetch() ;
+          form.reset();
+          setTitle("");
+          setDescription("");
+          setEditTaskModal(false);
+          refetch();
+        }
+      })
+      .catch(er => console.log(er))
+    // console.log(taskInfo);
   }
 
   //     useEffect(()=> {
@@ -205,13 +237,26 @@ function App() {
                   <div className="divider "></div>
                   <div className="flex flex-col gap-3 text-base-content">
                     {
-                      inProgress?.map(task => <div
-                        key={task._id}
-                        className="border rounded-xl p-2"
-                      >
-                        <p className="font-bold text-accent text-xl">{task.title}</p>
-                        <p className="text-gray-500">{task.description}</p>
-                      </div>)
+                      inProgress?.map(task =>
+                        <div
+                          key={task._id}
+                          className="border rounded-xl p-2 flex gap-2 justify-between"
+                        >
+                          <div>
+                            <p className="font-bold text-accent text-xl">{task.title}</p>
+                            <p className="text-gray-500">{task.description}</p>
+                          </div>
+                          <div className="text-xl flex flex-col ">
+                            <BiSolidEdit
+                              onClick={() => handleEdit(task)}
+                              className="mt-2 cursor-pointer" />
+                            <RiDeleteBin6Line
+                              onClick={() => handleDelete(task)}
+                              className="mt-3 text-red-600 cursor-pointer" />
+                          </div>
+                        </div>
+
+                      )
                     }
                   </div>
                 </div>
@@ -224,13 +269,26 @@ function App() {
                   <div className="divider "></div>
                   <div className="flex flex-col gap-3 text-base-content">
                     {
-                      done?.map(task => <div
-                        key={task._id}
-                        className="border rounded-xl p-2"
-                      >
+                   done?.map(task =>
+                    <div
+                      key={task._id}
+                      className="border rounded-xl p-2 flex gap-2 justify-between"
+                    >
+                      <div>
                         <p className="font-bold text-accent text-xl">{task.title}</p>
                         <p className="text-gray-500">{task.description}</p>
-                      </div>)
+                      </div>
+                      <div className="text-xl flex flex-col ">
+                        <BiSolidEdit
+                          onClick={() => handleEdit(task)}
+                          className="mt-2 cursor-pointer" />
+                        <RiDeleteBin6Line
+                          onClick={() => handleDelete(task)}
+                          className="mt-3 text-red-600 cursor-pointer" />
+                      </div>
+                    </div>
+
+                  )
                     }
                   </div>
                 </div>
@@ -242,12 +300,12 @@ function App() {
         </div>
       </div>
 
-      {/* modal  */}
-      {showModal && (
+      {/* modal for add task */}
+      {showAddTaskModal && (
         <div className="modal modal-open modal-bottom sm:modal-middle">
           <div className="modal-box relative min-h-[30vh]">
             <button
-              onClick={() => setShowModal(false)} // Close modal
+              onClick={() => setShowAddTaskModal(false)} // Close modal
               className="absolute top-5 right-5 text-3xl text-red-500 cursor-pointer"
             >
               <IoMdCloseCircle />
@@ -295,6 +353,68 @@ function App() {
                   </div>
                   <div className="form-control mt-6">
                     <button type="submit" className="btn btn-accent mx-auto w-full">Add Task</button>
+                  </div>
+                </form>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* modal for edit task */}
+      {editTaskModal && (
+        <div className="modal modal-open modal-bottom sm:modal-middle">
+          <div className="modal-box relative min-h-[30vh]">
+            <button
+              onClick={() => setEditTaskModal(false)} // Close modal
+              className="absolute top-5 right-5 text-3xl text-red-500 cursor-pointer">
+              <IoMdCloseCircle />
+            </button>
+            <h3 className="font-bold text-2xl text-accent text-center">
+              Edit Task
+            </h3>
+            <p className="pt-4 text-gray-500 text-center">
+              Please complete the form to proceed
+            </p>
+            <div className="modal-action">
+
+              <div className=" w-full max-w-sm mx-auto">
+                <form
+                  onSubmit={handleEditTask}
+                  className="card-body">
+                  <div className="form-control relative">
+                    <label className="label pb-1">
+                      <span className="label-text">Title</span>
+                    </label>
+                    <input type="text"
+                      name="title"
+                      value={title}
+                      onChange={handleTitleChange}
+                      className="input input-bordered"
+                      required >
+                    </input>
+                    <p
+                      className="text-sm text-gray-500 absolute right-2 -top-0"
+                    >{50 - title.length}/50</p>
+                  </div>
+                  <div className="form-control relative">
+                    <label className="label pb-1">
+                      <span className="label-text">Description</span>
+                    </label>
+                    <textarea type="text"
+                      value={description}
+                      onChange={handleDescriptionChange}
+                      name="description"
+                      className="textarea textarea-bordered"
+                      required />
+                    <p
+                      className="text-sm text-gray-500 absolute right-2 -top-0"
+                    >{200 - description.length}/200</p>
+                  </div>
+                  <div className="form-control mt-6">
+                    <button type="submit" className="btn btn-accent mx-auto w-full">Edit</button>
                   </div>
                 </form>
 
