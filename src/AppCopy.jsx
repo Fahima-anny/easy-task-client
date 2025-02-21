@@ -24,66 +24,6 @@ function App() {
   const [editTask, setEditTask] = useState(null);
   const [editTaskModal, setEditTaskModal] = useState(false) ;
 
-  const handleDragEnd = async (result) => {
-    if (!result.destination) return;
-  
-    const { source, destination } = result;
-    if (source.droppableId === destination.droppableId && source.index === destination.index) {
-      return;
-    }
-  
-    let sourceTasks, setSourceTasks, destinationTasks, setDestinationTasks;
-  
-    // Determine source and destination task lists
-    switch (source.droppableId) {
-      case "todo":
-        sourceTasks = todo;
-        setSourceTasks = setTodo;
-        break;
-      case "inProgress":
-        sourceTasks = inProgress;
-        setSourceTasks = setInProgress;
-        break;
-      case "done":
-        sourceTasks = done;
-        setSourceTasks = setDone;
-        break;
-    }
-  
-    switch (destination.droppableId) {
-      case "todo":
-        destinationTasks = todo;
-        setDestinationTasks = setTodo;
-        break;
-      case "inProgress":
-        destinationTasks = inProgress;
-        setDestinationTasks = setInProgress;
-        break;
-      case "done":
-        destinationTasks = done;
-        setDestinationTasks = setDone;
-        break;
-    }
-  
-    // Reorder tasks locally
-    const [movedTask] = sourceTasks.splice(source.index, 1);
-    movedTask.category = destination.droppableId;
-    destinationTasks.splice(destination.index, 0, movedTask);
-  
-    // Update state
-    setSourceTasks([...sourceTasks]);
-    setDestinationTasks([...destinationTasks]);
-  
-    // Only update backend if category changes
-    if (source.droppableId !== destination.droppableId) {
-      try {
-        await axiosPublic.put(`/tasks/cat/${movedTask._id}`, { category: movedTask.category });
-        refetch(); // Refresh data to sync with backend
-      } catch (error) {
-        console.error("Error updating task category:", error);
-      }
-    }
-  };
 
   
   const { data, isPending: allTasksPending, refetch } = useQuery({
@@ -106,6 +46,41 @@ function App() {
     enabled: !!user?.email
   })
 
+
+  
+  const handleDragEnd = async (result) => {
+    if (!result.destination) return;
+  
+    const { source, destination } = result;
+    if (source.droppableId === destination.droppableId && source.index === destination.index) {
+      return;
+    }
+  
+    const lists = {
+      todo: [...todo],
+      inProgress: [...inProgress],
+      done: [...done],
+    };
+  
+    const [movedTask] = lists[source.droppableId].splice(source.index, 1);
+    movedTask.category = destination.droppableId;
+    lists[destination.droppableId].splice(destination.index, 0, movedTask);
+  
+    setTodo(lists.todo);
+    setInProgress(lists.inProgress);
+    setDone(lists.done);
+  
+    if (source.droppableId !== destination.droppableId) {
+      try {
+        await axiosPublic.put(`/tasks/cat/${movedTask._id}`, { category: movedTask.category });
+        refetch(); 
+      } catch (error) {
+        console.error("Error updating task category:", error);
+      }
+    }
+  };
+  
+
   const handleTitleChange = (e) => {
     if (e.target.value.length <= 50) {
       setTitle(e.target.value);
@@ -121,13 +96,13 @@ function App() {
   }
   const handleAddTask = (e) => {
     e.preventDefault();
+  
     const form = e.target;
     const title = form.title.value;
     const description = form.description.value;
     const category = "todo";
     const time = Date.now();
     const userEmail = user.email;
-
     const taskInfo = {
       title, description, category, time, userEmail
     }
@@ -379,7 +354,7 @@ function App() {
                     >{200 - description.length}/200</p>
                   </div>
                   <div className="form-control mt-6">
-                    <button type="submit" className="btn btn-accent mx-auto w-full">Add Task</button>
+                    <button disabled={!title || !description} type="submit" className="btn btn-accent mx-auto w-full">Add Task</button>
                   </div>
                 </form>
 
@@ -441,7 +416,7 @@ function App() {
                     >{200 - description?.length}/200</p>
                   </div>
                   <div className="form-control mt-6">
-                    <button type="submit" className="btn btn-accent mx-auto w-full">Edit</button>
+                    <button disabled={!title || !description} type="submit" className="btn btn-accent mx-auto w-full">Edit</button>
                   </div>
                 </form>
 

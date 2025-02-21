@@ -24,6 +24,28 @@ function App() {
   const [editTask, setEditTask] = useState(null);
   const [editTaskModal, setEditTaskModal] = useState(false) ;
 
+
+  
+  const { data, isPending: allTasksPending, refetch } = useQuery({
+    queryKey: [user.email, 'allTasks'],
+    queryFn: async () => {
+      const res = await axiosPublic.get(`/tasks?email=${user.email}`);
+      return res?.data || [];
+    },
+    enabled: !!user?.email
+  });
+  
+  useEffect(() => {
+    if (data) {
+      setTodo(data.filter(task => task.category === 'todo'));
+      setInProgress(data.filter(task => task.category === 'inProgress'));
+      setDone(data.filter(task => task.category === 'done'));
+    }
+  }, [data]);
+  
+
+
+  
   const handleDragEnd = async (result) => {
     if (!result.destination) return;
   
@@ -32,73 +54,29 @@ function App() {
       return;
     }
   
-    let sourceTasks, setSourceTasks, destinationTasks, setDestinationTasks;
+    const lists = {
+      todo: [...todo],
+      inProgress: [...inProgress],
+      done: [...done],
+    };
   
-    // Determine source and destination task lists
-    switch (source.droppableId) {
-      case "todo":
-        sourceTasks = todo;
-        setSourceTasks = setTodo;
-        break;
-      case "inProgress":
-        sourceTasks = inProgress;
-        setSourceTasks = setInProgress;
-        break;
-      case "done":
-        sourceTasks = done;
-        setSourceTasks = setDone;
-        break;
-    }
-  
-    switch (destination.droppableId) {
-      case "todo":
-        destinationTasks = todo;
-        setDestinationTasks = setTodo;
-        break;
-      case "inProgress":
-        destinationTasks = inProgress;
-        setDestinationTasks = setInProgress;
-        break;
-      case "done":
-        destinationTasks = done;
-        setDestinationTasks = setDone;
-        break;
-    }
-  
-    // Reorder tasks locally
-    const [movedTask] = sourceTasks.splice(source.index, 1);
+    const [movedTask] = lists[source.droppableId].splice(source.index, 1);
     movedTask.category = destination.droppableId;
-    destinationTasks.splice(destination.index, 0, movedTask);
+    lists[destination.droppableId].splice(destination.index, 0, movedTask);
   
-    // Update state
-    setSourceTasks([...sourceTasks]);
-    setDestinationTasks([...destinationTasks]);
+    setTodo(lists.todo);
+    setInProgress(lists.inProgress);
+    setDone(lists.done);
   
-    // Only update backend if category changes
     if (source.droppableId !== destination.droppableId) {
       try {
         await axiosPublic.put(`/tasks/cat/${movedTask._id}`, { category: movedTask.category });
-        refetch(); // Refresh data to sync with backend
+        refetch(); 
       } catch (error) {
         console.error("Error updating task category:", error);
       }
     }
   };
-
-  
-  const { data, isPending: allTasksPending, refetch } = useQuery({
-    queryKey: [user.email, 'allTasks'],
-    queryFn: async () => {
-      const res = await axiosPublic.get(`/tasks?email=${user.email}`);
-      return res?.data;
-    },
-    onSuccess: (data) => {
-      setTodo(data.filter(task => task.category === 'todo'));
-      setInProgress(data.filter(task => task.category === 'inProgress'));
-      setDone(data.filter(task => task.category === 'done'));
-    },
-    enabled: !!user?.email
-  });
   
 
   const handleTitleChange = (e) => {
@@ -116,13 +94,13 @@ function App() {
   }
   const handleAddTask = (e) => {
     e.preventDefault();
+  
     const form = e.target;
     const title = form.title.value;
     const description = form.description.value;
     const category = "todo";
     const time = Date.now();
     const userEmail = user.email;
-
     const taskInfo = {
       title, description, category, time, userEmail
     }
@@ -374,7 +352,7 @@ function App() {
                     >{200 - description.length}/200</p>
                   </div>
                   <div className="form-control mt-6">
-                    <button type="submit" className="btn btn-accent mx-auto w-full">Add Task</button>
+                    <button disabled={!title || !description} type="submit" className="btn btn-accent mx-auto w-full">Add Task</button>
                   </div>
                 </form>
 
@@ -436,7 +414,7 @@ function App() {
                     >{200 - description?.length}/200</p>
                   </div>
                   <div className="form-control mt-6">
-                    <button type="submit" className="btn btn-accent mx-auto w-full">Edit</button>
+                    <button disabled={!title || !description} type="submit" className="btn btn-accent mx-auto w-full">Edit</button>
                   </div>
                 </form>
 
