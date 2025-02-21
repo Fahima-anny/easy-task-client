@@ -11,6 +11,8 @@ import Login from './Components/Login/Login.jsx';
 import PrivateRoute from './Components/Navbar/Authentications/PrivateRoute.jsx';
 import Main from './Components/Main/Main.jsx';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"; 
+import { ToastContainer } from 'react-toastify';
+import ThemeProvider from './Components/Navbar/Authentications/ThemeContext.jsx';
 const queryClient = new QueryClient();
 
 const router = createBrowserRouter([
@@ -34,10 +36,13 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
+       <ThemeProvider>
       <QueryClientProvider client={queryClient}> 
     <AuthProvider>
       <RouterProvider router={router} />
     </AuthProvider>
     </QueryClientProvider>
+    <ToastContainer />
+    </ThemeProvider>
   </StrictMode>,
 )

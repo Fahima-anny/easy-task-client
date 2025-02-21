@@ -8,6 +8,9 @@ import { useQuery } from "@tanstack/react-query";
 import { BiSolidEdit } from "react-icons/bi";
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { toast } from "react-toastify";
+import AddTaskModal from "./Components/Modals/AddTaskModal";
+import EditTaskModal from "./Components/Modals/EditTaskModal";
 
 
 
@@ -22,10 +25,10 @@ function App() {
   const [inProgress, setInProgress] = useState([]);
   const [done, setDone] = useState([]);
   const [editTask, setEditTask] = useState(null);
-  const [editTaskModal, setEditTaskModal] = useState(false) ;
+  const [editTaskModal, setEditTaskModal] = useState(false);
 
 
-  
+
   const { data, isPending: allTasksPending, refetch } = useQuery({
     queryKey: [user.email, 'allTasks'],
     queryFn: async () => {
@@ -47,35 +50,35 @@ function App() {
   })
 
 
-  
+
   const handleDragEnd = async (result) => {
     if (!result.destination) return;
-  
+
     const { source, destination } = result;
-  
+
     // If the task is moved to the same place, do nothing
     if (source.droppableId === destination.droppableId && source.index === destination.index) {
       return;
     }
-  
+
     const lists = { todo, inProgress, done };
     const [movedTask] = lists[source.droppableId].splice(source.index, 1);
     movedTask.category = destination.droppableId;
     movedTask.position = destination.index; // Update the position
-  
+
     lists[destination.droppableId].splice(destination.index, 0, movedTask);
-  
+
     // Reassign positions for all tasks in the destination list
     const updatedTasks = lists[destination.droppableId].map((task, index) => {
       task.position = index; // Set position based on the new index
       return task;
     });
-  
+
     // Update the local state
     setTodo(lists.todo);
     setInProgress(lists.inProgress);
     setDone(lists.done);
-  
+
     // Now, update the backend with the new task order
     try {
       // Update the position of the moved task
@@ -83,7 +86,12 @@ function App() {
         category: movedTask.category,
         position: movedTask.position, // Send the new position to the server
       });
-  
+
+      toast.success('Task Reordered', {
+        position: "top-center",
+        autoClose: 1000,
+      });
+
       // Update positions for all tasks in the new category
       await Promise.all(
         updatedTasks.map((task) =>
@@ -93,22 +101,13 @@ function App() {
           })
         )
       );
-  
-      Swal.fire({
-        icon: "success",
-        title: "Task Reordered",
-        showConfirmButton: false,
-        timer: 1500,
-      });
-  
+     
+
       refetch(); // Refetch tasks after updating the order
     } catch (error) {
       console.error("Error updating task position:", error);
     }
   };
-  
-  
-  
 
   const handleTitleChange = (e) => {
     if (e.target.value.length <= 50) {
@@ -125,27 +124,27 @@ function App() {
   }
   const handleAddTask = (e) => {
     e.preventDefault();
-  
+
     const form = e.target;
     const title = form.title.value;
     const description = form.description.value;
     const category = "todo";
     const time = Date.now();
     const userEmail = user.email;
-    const position = data?.length || 0 ;
+    const position = data?.length || 0;
     const taskInfo = {
       title, description, category, time, userEmail, position
     }
     axiosPublic.post("/tasks", taskInfo)
       .then(res => {
-        console.log("add kor",res.data);
+        console.log("add kor", res.data);
         if (res.data.insertedId) {
-          Swal.fire({
-            icon: "success",
-            title: "New task added",
-            showConfirmButton: false,
-            timer: 1500
-          });
+
+          toast.success("New task added"
+            , {
+              position: "top-center",
+              autoClose: 1000,
+            });
           // refetch() ;
           form.reset();
           setTitle("");
@@ -186,8 +185,8 @@ function App() {
   }
   const handleEdit = (task) => {
     setEditTask(task);
-    setTitle(task.title); 
-    setDescription(task.description); 
+    setTitle(task.title);
+    setDescription(task.description);
     setEditTaskModal(true);
   };
   const handleEditTask = (e) => {
@@ -204,11 +203,9 @@ function App() {
       .then(res => {
         console.log(res.data);
         if (res.data.matchedCount > 0) {
-          Swal.fire({
-            icon: "success",
-            title: "Task Updated",
-            showConfirmButton: false,
-            timer: 1500
+          toast.success('Task Updated', {
+            position: "top-center",
+            autoClose: 1000,
           });
           // refetch() ;
           form.reset();
@@ -231,102 +228,100 @@ function App() {
   return (
     <>
       <div
-        className="hero flex min-h-full justify-start items-start pt-32 pb-20 px-3 md:px-0 text-black"
-        style={{
-          backgroundImage: "url(https://i.ibb.co.com/9kP47mMX/4890914.jpg)",
-        }}>
+        className="hero flex min-h-[94vh] justify-start items-start pt-32 pb-20 px-3 md:px-0 text-base-content"
+      >
         {/* <div className="hero-overlay bg- bg-opacity-60"></div> */}
         <div className="w-full max-w-7xl mx-auto">
           <div className="">
-          <DragDropContext onDragEnd={handleDragEnd}>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      
-      {/* To-Do List */}
-      <Droppable droppableId="todo">
-        {(provided) => (
-          <div {...provided.droppableProps} ref={provided.innerRef} className="border p-3 rounded-2xl min-h-[50vh] space-y-3">
-            <h2 className="text-2xl font-bold text-center">To-Do</h2>
-            <div className="divider"></div>
-            <button
-                    onClick={handleOpenModal}
-                    className="btn btn-outline w-full rounded-xl">Add +</button>
-            {todo.map((task, index) => (
-              <Draggable key={task._id} draggableId={task._id} index={index}>
-                {(provided) => (
-                  <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="border bg-base-100 p-2 rounded-xl flex justify-between">
-                    <div>
-                      <p className="font-bold">{task.title}</p>
-                      <p className="text-gray-500">{task.description}</p>
-                    </div>
-                    <div className="text-xl flex flex-col gap-2">
-                      <BiSolidEdit onClick={() => handleEdit(task)} className="cursor-pointer" />
-                      <RiDeleteBin6Line onClick={() => handleDelete(task)} className="text-red-600 cursor-pointer" />
-                    </div>
-                  </div>
-                )}
-              </Draggable>
-            ))}
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
-      {/* In Progress List */}
-      <Droppable droppableId="inProgress">
-        {(provided) => (
-          <div {...provided.droppableProps} ref={provided.innerRef} className="border p-3 rounded-2xl min-h-[50vh] space-y-3">
-            <h2 className="text-2xl font-bold text-center">In Progress</h2>
-            <div className="divider"></div>
-            {inProgress.map((task, index) => (
-              <Draggable key={task._id} draggableId={task._id} index={index}>
-                {(provided) => (
-                  <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="border bg-base-100 p-2 rounded-xl flex justify-between">
-                    <div>
-                      <p className="font-bold">{task.title}</p>
-                      <p className="text-gray-500">{task.description}</p>
+                {/* To-Do List */}
+                <Droppable droppableId="todo">
+                  {(provided) => (
+                    <div {...provided.droppableProps} ref={provided.innerRef} className="  p-3 rounded-2xl min-h-[50vh] space-y-3 bg-base-300">
+                      <h2 className="text-2xl font-bold text-center text-accent">To-Do</h2>
+                      <div className="divider"></div>
+                      <button
+                        onClick={handleOpenModal}
+                        className="btn  border border-gray-600 w-full rounded-xl bg-base-100">Add +</button>
+                      {todo.map((task, index) => (
+                        <Draggable key={task._id} draggableId={task._id} index={index}>
+                          {(provided) => (
+                            <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="bg-base-100 border border-gray-600 p-2 rounded-xl flex justify-between">
+                              <div>
+                                <p className="font-bold">{task.title}</p>
+                                <p className="text-gray-500">{task.description}</p>
+                              </div>
+                              <div className="text-xl flex flex-col gap-3">
+                                <BiSolidEdit onClick={() => handleEdit(task)} className="cursor-pointer" />
+                                <RiDeleteBin6Line onClick={() => handleDelete(task)} className="text-red-600 cursor-pointer" />
+                              </div>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
                     </div>
-                    <div className="text-xl flex flex-col gap-2">
-                      <BiSolidEdit onClick={() => handleEdit(task)} className="cursor-pointer" />
-                      <RiDeleteBin6Line onClick={() => handleDelete(task)} className="text-red-600 cursor-pointer" />
-                    </div>
-                  </div>
-                )}
-              </Draggable>
-            ))}
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>
+                  )}
+                </Droppable>
 
-      {/* Done List */}
-      <Droppable droppableId="done">
-        {(provided) => (
-          <div {...provided.droppableProps} ref={provided.innerRef} className="border p-3 rounded-2xl min-h-[50vh] space-y-3">
-            <h2 className="text-2xl font-bold text-center">Done</h2>
-            <div className="divider"></div>
-            {done.map((task, index) => (
-              <Draggable key={task._id} draggableId={task._id} index={index}>
-                {(provided) => (
-                  <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="border bg-base-100 p-2 rounded-xl flex justify-between">
-                    <div>
-                      <p className="font-bold">{task.title}</p>
-                      <p className="text-gray-500">{task.description}</p>
+                {/* In Progress List */}
+                <Droppable droppableId="inProgress">
+                  {(provided) => (
+                    <div {...provided.droppableProps} ref={provided.innerRef} className=" p-3 rounded-2xl min-h-[50vh] space-y-3 bg-base-300">
+                      <h2 className="text-2xl font-bold text-center text-accent">In Progress</h2>
+                      <div className="divider"></div>
+                      {inProgress.map((task, index) => (
+                        <Draggable key={task._id} draggableId={task._id} index={index}>
+                          {(provided) => (
+                            <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="bg-base-100 border border-gray-600 p-2 rounded-xl flex justify-between">
+                              <div>
+                                <p className="font-bold">{task.title}</p>
+                                <p className="text-gray-500">{task.description}</p>
+                              </div>
+                              <div className="text-xl flex flex-col gap-2">
+                                <BiSolidEdit onClick={() => handleEdit(task)} className="cursor-pointer" />
+                                <RiDeleteBin6Line onClick={() => handleDelete(task)} className="text-red-600 cursor-pointer" />
+                              </div>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
                     </div>
-                    <div className="text-xl flex flex-col gap-2">
-                      <BiSolidEdit onClick={() => handleEdit(task)} className="cursor-pointer" />
-                      <RiDeleteBin6Line onClick={() => handleDelete(task)} className="text-red-600 cursor-pointer" />
-                    </div>
-                  </div>
-                )}
-              </Draggable>
-            ))}
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>
+                  )}
+                </Droppable>
 
-    </div>
-  </DragDropContext>
+                {/* Done List */}
+                <Droppable droppableId="done">
+                  {(provided) => (
+                    <div {...provided.droppableProps} ref={provided.innerRef} className="bg-base-300 p-3 rounded-2xl min-h-[50vh] space-y-3">
+                      <h2 className="text-2xl font-bold text-center text-accent ">Done</h2>
+                      <div className="divider"></div>
+                      {done.map((task, index) => (
+                        <Draggable key={task._id} draggableId={task._id} index={index}>
+                          {(provided) => (
+                            <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="bg-base-100 border border-gray-600 p-2 rounded-xl flex justify-between">
+                              <div>
+                                <p className="font-bold">{task.title}</p>
+                                <p className="text-gray-500">{task.description}</p>
+                              </div>
+                              <div className="text-xl flex flex-col gap-2">
+                                <BiSolidEdit onClick={() => handleEdit(task)} className="cursor-pointer" />
+                                <RiDeleteBin6Line onClick={() => handleDelete(task)} className="text-red-600 cursor-pointer" />
+                              </div>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+
+              </div>
+            </DragDropContext>
 
           </div>
         </div>
@@ -334,127 +329,30 @@ function App() {
 
       {/* modal for add task */}
       {showAddTaskModal && (
-        <div className="modal modal-open modal-bottom sm:modal-middle">
-          <div className="modal-box relative min-h-[30vh]">
-            <button
-              onClick={() => setShowAddTaskModal(false)} // Close modal
-              className="absolute top-5 right-5 text-3xl text-red-500 cursor-pointer"
-            >
-              <IoMdCloseCircle />
-            </button>
-            <h3 className="font-bold text-2xl text-accent text-center">
-              Add New Task
-            </h3>
-            <p className="pt-4 text-gray-500 text-center">
-              Please complete the form to proceed
-            </p>
-            <div className="modal-action">
-
-              <div className=" w-full max-w-sm mx-auto">
-                <form
-                  onSubmit={handleAddTask}
-                  className="card-body">
-                  <div className="form-control relative">
-                    <label className="label pb-1">
-                      <span className="label-text">Title</span>
-                    </label>
-                    <input type="text"
-                      name="title"
-                      value={title}
-                      onChange={handleTitleChange}
-                      className="input input-bordered"
-                      required >
-                    </input>
-                    <p
-                      className="text-sm text-gray-500 absolute right-2 -top-0"
-                    >{50 - title.length}/50</p>
-                  </div>
-                  <div className="form-control relative">
-                    <label className="label pb-1">
-                      <span className="label-text">Description</span>
-                    </label>
-                    <textarea type="text"
-                      value={description}
-                      onChange={handleDescriptionChange}
-                      name="description"
-                      className="textarea textarea-bordered"
-                      required />
-                    <p
-                      className="text-sm text-gray-500 absolute right-2 -top-0"
-                    >{200 - description.length}/200</p>
-                  </div>
-                  <div className="form-control mt-6">
-                    <button disabled={!title || !description} type="submit" className="btn btn-accent mx-auto w-full">Add Task</button>
-                  </div>
-                </form>
-
-              </div>
-
-            </div>
-          </div>
-        </div>
+        <AddTaskModal
+          task={editTask}
+          setShowAddTaskModal={setShowAddTaskModal}
+          handleAddTask={handleAddTask}
+          handleTitleChange={handleTitleChange}
+          handleDescriptionChange={handleDescriptionChange}
+          description={description}
+          title={title}
+        ></AddTaskModal>
       )}
 
       {/* modal for edit task */}
       {editTaskModal && (
-        <div className="modal modal-open modal-bottom sm:modal-middle">
-          <div className="modal-box relative min-h-[30vh]">
-            <button
-              onClick={() => setEditTaskModal(false)} // Close modal
-              className="absolute top-5 right-5 text-3xl text-red-500 cursor-pointer">
-              <IoMdCloseCircle />
-            </button>
-            <h3 className="font-bold text-2xl text-accent text-center">
-              Edit Task
-            </h3>
-            <p className="pt-4 text-gray-500 text-center">
-              Please complete the form to proceed
-            </p>
-            <div className="modal-action">
+        <EditTaskModal
+          task={editTask}
+          setEditTaskModal={setEditTaskModal}
+          handleEditTask={handleEditTask}
+          handleTitleChange={handleTitleChange}
+          handleDescriptionChange={handleDescriptionChange}
+          description={description}
+          title={title}
+        ></EditTaskModal>
 
-              <div className=" w-full max-w-sm mx-auto">
-                <form
-                  onSubmit={handleEditTask}
-                  className="card-body">
-                  <div className="form-control relative">
-                    <label className="label pb-1">
-                      <span className="label-text">Title</span>
-                    </label>
-                    <input type="text"
-                      name="title"
-                      value={title}
-                      onChange={handleTitleChange}
-                      className="input input-bordered"
-                      required >
-                    </input>
-                    <p
-                      className="text-sm text-gray-500 absolute right-2 -top-0"
-                    >{50 - title?.length}/50</p>
-                  </div>
-                  <div className="form-control relative">
-                    <label className="label pb-1">
-                      <span className="label-text">Description</span>
-                    </label>
-                    <textarea type="text"
-                      value={description}
-                      onChange={handleDescriptionChange}
-                      name="description"
-                      className="textarea textarea-bordered"
-                      required />
-                    <p
-                      className="text-sm text-gray-500 absolute right-2 -top-0"
-                    >{200 - description?.length}/200</p>
-                  </div>
-                  <div className="form-control mt-6">
-                    <button disabled={!title || !description} type="submit" className="btn btn-accent mx-auto w-full">Edit</button>
-                  </div>
-                </form>
 
-              </div>
-
-            </div>
-          </div>
-        </div>
       )}
 
     </>

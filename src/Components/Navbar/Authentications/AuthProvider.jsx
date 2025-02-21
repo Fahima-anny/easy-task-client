@@ -10,8 +10,6 @@ const AuthProvider = ({ children }) => {
 
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [profilePic, setProfilePic] = useState(null);
-    const [profileName, setProfileName] = useState(null);
     const googleProvider = new GoogleAuthProvider();
     const auth = getAuth(app)
 
@@ -33,18 +31,12 @@ const AuthProvider = ({ children }) => {
         googleLogin,
         user,
         loading,
-        setProfilePic,
-        setProfileName,
-        profilePic,
-        profileName
     }
 
     useEffect(() => {
         const unSubscribe = onAuthStateChanged(auth, currentUser => {
             setUser(currentUser);
             setLoading(false) ;
-            // setProfilePic(currentUser?.photoURL) ;
-            // setProfileName(currentUser?.displayName)
             console.log("current user : ", currentUser);
         })
         return () => unSubscribe();

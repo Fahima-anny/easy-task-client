@@ -1,42 +1,69 @@
+/* eslint-disable react/no-unescaped-entities */
 import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../Navbar/Authentications/AuthContext";
+import { toast } from "react-toastify";
+import useAxiosPublic from "../Navbar/Authentications/AxiosPublic";
 
 const Login = () => {
-    const { googleLogin } = useContext(AuthContext) ;
+
     const navigate = useNavigate()
-  
-  const handleGoogleLogin = () => {
-  googleLogin()
-  .then(res => {
-    console.log(res.user);
-    navigate("/")
-  })
-  .catch(Er => {
-    console.log(Er);
-  })
+    const { googleLogin} = useContext(AuthContext) ;
+  const axiosPublic = useAxiosPublic() ;
+
+const handleGoogleLogin = () => {
+googleLogin()
+.then(res => {
+  console.log(res.user.email);
+  toast.success(`Welcome ${res.user.displayName}`, {
+    position: "top-center",
+    autoClose: 1000,
+  });
+  navigate("/")
+
+  const userInfo = {
+    name : res.user.displayName,
+    email : res.user.email,
+    userID : res.user.uid,
+    photo : res.user.photoURL,
   }
+  axiosPublic.get(`/users?email=${res.user.email}`)
+  .then(response => {
+    console.log(response.data);
+    if(!response.data){
+      axiosPublic.post("/users", userInfo)
+      .then(res => {
+        console.log(res);
+      })
+      .catch(er => console.log(er))
+    }
+  })
+  .catch(er => console.log(er))
+})
+.catch(Er => {
+  console.log(Er);
+})
+}
   
   
     return (
       <>
         <div
   
-          className="hero min-h-screen"
-          style={{
-            backgroundImage: "url(https://i.ibb.co.com/9kP47mMX/4890914.jpg)",
-          }}>
+          className="hero min-h-[94vh] pt-20 flex justify-center items-center px-3 md:px-0 text-center md:text-left">
           {/* <div className="hero-overlay bg- bg-opacity-60"></div> */}
-          <div className=" w-full max-w-4xl mx-auto text-black  pt-20 md:pt-0 pb-10">
-            <div className="text-center space-y-5">
-              <img src="https://i.ibb.co.com/pjWHjZhH/43029.jpg" 
-              className="mx-auto w-auto md:max-w-sm"
+          <div className=" w-full max-w-7xl mx-auto text-base-content ">
+            <div className="grid grid-cols-1 md:grid-cols-2 space-y-5 justify-center items-center gap-10">
+              <img src="https://i.ibb.co.com/bZbZwmc/43029.png" 
+              className="mx-auto w-auto rounded-2xl"
                alt="" />
-              <h1 className=" text-2xl md:text-5xl font-bold font-serif">Simplify Your Tasks</h1>
-              <p className="">Manage, track, and collaborate on tasks effortlessly. Streamline workflows, set priorities, and stay organized with real-time updates. Boost productivity and ensure smooth task management for individuals and teams with ease.</p>
+         <div className="space-y-6">
+         <h1 className=" text-2xl md:text-5xl font-bold font-serif ">Simplify Your Tasks</h1>
+              <p className="text-gray-500">Turn your to-do list into done! Our powerful task management system is designed to streamline your workflow, boost productivity, and keep you ahead of deadlines. Whether you're managing projects, collaborating with a team, or organizing personal tasks, our intuitive platform helps you stay focused and efficient. Say goodbye to missed deadlines and scattered notes—plan, prioritize, and accomplish more with ease. Experience seamless task tracking, real-time collaboration, and smart reminders. Get started today and take control of your productivity!</p>
               <button 
               onClick={handleGoogleLogin}
-              className="btn btn-accent btn-outline border-2 rounded-4xl" >Lets Get Started</button>
+              className="btn btn-accent btn-outline bg-black hover:bg-gray-900 duration-300 text-white border-2 rounded-4xl mb-10" >Lets Get Started</button>
+         </div>
             </div>
           </div>
         </div>
