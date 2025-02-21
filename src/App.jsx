@@ -1,4 +1,4 @@
-
+/* eslint-disable no-unused-vars */
 import { useContext, useEffect, useState } from "react";
 import { IoMdCloseCircle } from "react-icons/io";
 import { AuthContext } from "./Components/Navbar/Authentications/AuthContext";
@@ -30,19 +30,21 @@ function App() {
     queryKey: [user.email, 'allTasks'],
     queryFn: async () => {
       const res = await axiosPublic.get(`/tasks?email=${user.email}`);
-      return res?.data || [];
+      console.log(res?.data);
+
+      const todoTasks = res.data.filter(task => task.category === 'todo')
+      setTodo(todoTasks);
+      // console.log(todoTasks);
+
+      const inProgressTasks = res.data.filter(task => task.category === 'inProgress')
+      setInProgress(inProgressTasks);
+
+      const doneTasks = res.data.filter(task => task.category === 'done')
+      setDone(doneTasks);
+      return res?.data
     },
     enabled: !!user?.email
-  });
-  
-  useEffect(() => {
-    if (data) {
-      setTodo(data.filter(task => task.category === 'todo'));
-      setInProgress(data.filter(task => task.category === 'inProgress'));
-      setDone(data.filter(task => task.category === 'done'));
-    }
-  }, [data]);
-  
+  })
 
 
   
@@ -50,33 +52,62 @@ function App() {
     if (!result.destination) return;
   
     const { source, destination } = result;
+  
+    // If the task is moved to the same place, do nothing
     if (source.droppableId === destination.droppableId && source.index === destination.index) {
       return;
     }
   
-    const lists = {
-      todo: [...todo],
-      inProgress: [...inProgress],
-      done: [...done],
-    };
-  
+    const lists = { todo, inProgress, done };
     const [movedTask] = lists[source.droppableId].splice(source.index, 1);
     movedTask.category = destination.droppableId;
+    movedTask.position = destination.index; // Update the position
+  
     lists[destination.droppableId].splice(destination.index, 0, movedTask);
   
+    // Reassign positions for all tasks in the destination list
+    const updatedTasks = lists[destination.droppableId].map((task, index) => {
+      task.position = index; // Set position based on the new index
+      return task;
+    });
+  
+    // Update the local state
     setTodo(lists.todo);
     setInProgress(lists.inProgress);
     setDone(lists.done);
   
-    if (source.droppableId !== destination.droppableId) {
-      try {
-        await axiosPublic.put(`/tasks/cat/${movedTask._id}`, { category: movedTask.category });
-        refetch(); 
-      } catch (error) {
-        console.error("Error updating task category:", error);
-      }
+    // Now, update the backend with the new task order
+    try {
+      // Update the position of the moved task
+      await axiosPublic.put(`/tasks/cat/${movedTask._id}`, {
+        category: movedTask.category,
+        position: movedTask.position, // Send the new position to the server
+      });
+  
+      // Update positions for all tasks in the new category
+      await Promise.all(
+        updatedTasks.map((task) =>
+          axiosPublic.put(`/tasks/cat/${task._id}`, {
+            category: task.category,
+            position: task.position,
+          })
+        )
+      );
+  
+      Swal.fire({
+        icon: "success",
+        title: "Task Reordered",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+  
+      refetch(); // Refetch tasks after updating the order
+    } catch (error) {
+      console.error("Error updating task position:", error);
     }
   };
+  
+  
   
 
   const handleTitleChange = (e) => {
@@ -101,8 +132,9 @@ function App() {
     const category = "todo";
     const time = Date.now();
     const userEmail = user.email;
+    const position = data?.length || 0 ;
     const taskInfo = {
-      title, description, category, time, userEmail
+      title, description, category, time, userEmail, position
     }
     axiosPublic.post("/tasks", taskInfo)
       .then(res => {
@@ -221,7 +253,7 @@ function App() {
             {todo.map((task, index) => (
               <Draggable key={task._id} draggableId={task._id} index={index}>
                 {(provided) => (
-                  <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="border p-2 rounded-xl flex justify-between">
+                  <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="border bg-base-100 p-2 rounded-xl flex justify-between">
                     <div>
                       <p className="font-bold">{task.title}</p>
                       <p className="text-gray-500">{task.description}</p>
@@ -248,7 +280,7 @@ function App() {
             {inProgress.map((task, index) => (
               <Draggable key={task._id} draggableId={task._id} index={index}>
                 {(provided) => (
-                  <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="border p-2 rounded-xl flex justify-between">
+                  <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="border bg-base-100 p-2 rounded-xl flex justify-between">
                     <div>
                       <p className="font-bold">{task.title}</p>
                       <p className="text-gray-500">{task.description}</p>
@@ -275,7 +307,7 @@ function App() {
             {done.map((task, index) => (
               <Draggable key={task._id} draggableId={task._id} index={index}>
                 {(provided) => (
-                  <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="border p-2 rounded-xl flex justify-between">
+                  <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="border bg-base-100 p-2 rounded-xl flex justify-between">
                     <div>
                       <p className="font-bold">{task.title}</p>
                       <p className="text-gray-500">{task.description}</p>
