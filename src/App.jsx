@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars */
+
 import { useContext, useEffect, useState } from "react";
 import { IoMdCloseCircle } from "react-icons/io";
 import { AuthContext } from "./Components/Navbar/Authentications/AuthContext";
