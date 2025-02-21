@@ -253,7 +253,7 @@ function App() {
                       <p className="font-bold">{task.title}</p>
                       <p className="text-gray-500">{task.description}</p>
                     </div>
-                    <div className="text-xl flex flex-col">
+                    <div className="text-xl flex flex-col gap-2">
                       <BiSolidEdit onClick={() => handleEdit(task)} className="cursor-pointer" />
                       <RiDeleteBin6Line onClick={() => handleDelete(task)} className="text-red-600 cursor-pointer" />
                     </div>
@@ -280,7 +280,7 @@ function App() {
                       <p className="font-bold">{task.title}</p>
                       <p className="text-gray-500">{task.description}</p>
                     </div>
-                    <div className="text-xl flex flex-col">
+                    <div className="text-xl flex flex-col gap-2">
                       <BiSolidEdit onClick={() => handleEdit(task)} className="cursor-pointer" />
                       <RiDeleteBin6Line onClick={() => handleDelete(task)} className="text-red-600 cursor-pointer" />
                     </div>
@@ -307,7 +307,7 @@ function App() {
                       <p className="font-bold">{task.title}</p>
                       <p className="text-gray-500">{task.description}</p>
                     </div>
-                    <div className="text-xl flex flex-col">
+                    <div className="text-xl flex flex-col gap-2">
                       <BiSolidEdit onClick={() => handleEdit(task)} className="cursor-pointer" />
                       <RiDeleteBin6Line onClick={() => handleDelete(task)} className="text-red-600 cursor-pointer" />
                     </div>
