@@ -56,8 +56,8 @@ const handleLogout = () => {
 }
   
     return (
-      <div className="fixed z-50 backdrop-blur-sm bg-black/20 w-full">
-        <div className="">
+      <div className="fixed z-50 backdrop-blur-sm bg-black/20 w-full ">
+        <div className="pr-3 md:pr-0">
             <div className="navbar p-0 max-w-7xl mx-auto">
   <div className="navbar-start">
     <div className="dropdown">
@@ -95,7 +95,7 @@ const handleLogout = () => {
   </span>
 </div>
   </div>
-  <div className="navbar-center hidden lg:flex">
+  {/* <div className="navbar-center hidden lg:flex">
     <ul className="menu menu-horizontal px-1">
       {/* <li><a>Item 1</a></li>
       <li>
@@ -108,8 +108,8 @@ const handleLogout = () => {
         </details>
       </li>
       <li><a>Item 3</a></li> */}
-    </ul>
-  </div>
+    {/* </ul>
+  </div> */} 
   <div className="navbar-end">
 {user ? <>
     <button 

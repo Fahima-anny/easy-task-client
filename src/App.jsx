@@ -34,6 +34,7 @@ function App() {
   
     let sourceTasks, setSourceTasks, destinationTasks, setDestinationTasks;
   
+    // Determine source and destination task lists
     switch (source.droppableId) {
       case "todo":
         sourceTasks = todo;
@@ -64,19 +65,23 @@ function App() {
         break;
     }
   
+    // Reorder tasks locally
     const [movedTask] = sourceTasks.splice(source.index, 1);
     movedTask.category = destination.droppableId;
     destinationTasks.splice(destination.index, 0, movedTask);
   
+    // Update state
     setSourceTasks([...sourceTasks]);
     setDestinationTasks([...destinationTasks]);
   
-    try {
-      await axiosPublic.put(`/tasks/cat/${movedTask._id}`, { category: movedTask.category });
-      console.log(movedTask.category);
-      refetch();
-    } catch (error) {
-      console.error("Error updating task category:", error);
+    // Only update backend if category changes
+    if (source.droppableId !== destination.droppableId) {
+      try {
+        await axiosPublic.put(`/tasks/cat/${movedTask._id}`, { category: movedTask.category });
+        refetch(); // Refresh data to sync with backend
+      } catch (error) {
+        console.error("Error updating task category:", error);
+      }
     }
   };
 
@@ -128,7 +133,7 @@ function App() {
     }
     axiosPublic.post("/tasks", taskInfo)
       .then(res => {
-        console.log(res.data);
+        console.log("add kor",res.data);
         if (res.data.insertedId) {
           Swal.fire({
             icon: "success",
@@ -221,7 +226,7 @@ function App() {
   return (
     <>
       <div
-        className="hero flex h-screen justify-start items-start pt-32 pb-20"
+        className="hero flex min-h-full justify-start items-start pt-32 pb-20 px-3 md:px-0 text-black"
         style={{
           backgroundImage: "url(https://i.ibb.co.com/9kP47mMX/4890914.jpg)",
         }}>
