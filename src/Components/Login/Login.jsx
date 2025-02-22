@@ -82,7 +82,7 @@ googleLogin()
          className=" text-2xl md:text-5xl font-bold font-serif ">Simplify Your Tasks</h1>
               <p 
                data-aos="fade-left"
-              className="text-gray-500">Turn your to-do list into done! Our powerful task management system is designed to streamline your workflow, boost productivity, and keep you ahead of deadlines. Whether you're managing projects, collaborating with a team, or organizing personal tasks, our intuitive platform helps you stay focused and efficient. Say goodbye to missed deadlines and scattered notes—plan, prioritize, and accomplish more with ease. Experience seamless task tracking, real-time collaboration, and smart reminders. Get started today and take control of your productivity!</p>
+              className="text-gray-500 justify">Turn your to-do list into done! Our powerful task management system is designed to streamline your workflow, boost productivity, and keep you ahead of deadlines. Whether you're managing projects, collaborating with a team, or organizing personal tasks, our intuitive platform helps you stay focused and efficient. Say goodbye to missed deadlines and scattered notes—plan, prioritize, and accomplish more with ease. Experience seamless task tracking, real-time collaboration, and smart reminders. Get started today and take control of your productivity!</p>
               <button 
                data-aos="fade-left"
               onClick={handleGoogleLogin}
