@@ -11,10 +11,18 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { toast } from "react-toastify";
 import AddTaskModal from "./Components/Modals/AddTaskModal";
 import EditTaskModal from "./Components/Modals/EditTaskModal";
-
-
+import AOS from "aos";
+import "aos/dist/aos.css";
 
 function App() {
+
+  useEffect(() => {
+    AOS.init({
+        duration: 2000,
+        once: true,
+        offset: 200
+    });
+}, []);
 
   const { user } = useContext(AuthContext);
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
@@ -33,7 +41,7 @@ function App() {
     queryKey: [user.email, 'allTasks'],
     queryFn: async () => {
       const res = await axiosPublic.get(`/tasks?email=${user.email}`);
-      console.log(res?.data);
+      // console.log(res?.data);
 
       const todoTasks = res.data.filter(task => task.category === 'todo')
       setTodo(todoTasks);
@@ -137,7 +145,7 @@ function App() {
     }
     axiosPublic.post("/tasks", taskInfo)
       .then(res => {
-        console.log("add kor", res.data);
+        // console.log("add kor", res.data);
         if (res.data.insertedId) {
 
           toast.success("New task added"
@@ -169,7 +177,7 @@ function App() {
       if (result.isConfirmed) {
         axiosPublic.delete(`/tasks/${task._id}`)
           .then(res => {
-            console.log(res.data);
+            // console.log(res.data);
             if (res.data.deletedCount > 0) {
               refetch();
               Swal.fire({
@@ -201,7 +209,7 @@ function App() {
 
     axiosPublic.put(`/tasks/${editTask._id}`, editedTaskInfo)
       .then(res => {
-        console.log(res.data);
+        // console.log(res.data);
         if (res.data.matchedCount > 0) {
           toast.success('Task Updated', {
             position: "top-center",
@@ -228,13 +236,16 @@ function App() {
   return (
     <>
       <div
+        // data-aos="fade-left"
         className="hero flex min-h-[94vh] justify-start items-start pt-32 pb-20 px-3 md:px-0 text-base-content"
       >
         {/* <div className="hero-overlay bg- bg-opacity-60"></div> */}
         <div className="w-full max-w-7xl mx-auto">
           <div className="">
             <DragDropContext onDragEnd={handleDragEnd}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div 
+             
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
                 {/* To-Do List */}
                 <Droppable droppableId="todo">
@@ -248,7 +259,7 @@ function App() {
                       {todo.map((task, index) => (
                         <Draggable key={task._id} draggableId={task._id} index={index}>
                           {(provided) => (
-                            <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="bg-base-100 border border-gray-600 p-2 rounded-xl flex justify-between">
+                            <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="bg-base-100 border border-gray-600 p-2 rounded-xl flex justify-between transition delay-150 duration-300 ease-in-out hover:translate-x-3 ">
                               <div>
                                 <p className="font-bold">{task.title}</p>
                                 <p className="text-gray-500">{task.description}</p>
@@ -275,7 +286,7 @@ function App() {
                       {inProgress.map((task, index) => (
                         <Draggable key={task._id} draggableId={task._id} index={index}>
                           {(provided) => (
-                            <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="bg-base-100 border border-gray-600 p-2 rounded-xl flex justify-between">
+                            <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="bg-base-100 border border-gray-600 p-2 rounded-xl flex justify-between transition delay-150 duration-300 ease-in-out hover:translate-x-3">
                               <div>
                                 <p className="font-bold">{task.title}</p>
                                 <p className="text-gray-500">{task.description}</p>
@@ -302,7 +313,7 @@ function App() {
                       {done.map((task, index) => (
                         <Draggable key={task._id} draggableId={task._id} index={index}>
                           {(provided) => (
-                            <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="bg-base-100 border border-gray-600 p-2 rounded-xl flex justify-between">
+                            <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="bg-base-100 border border-gray-600 p-2 rounded-xl flex justify-between transition delay-150 duration-300 ease-in-out hover:translate-x-3">
                               <div>
                                 <p className="font-bold">{task.title}</p>
                                 <p className="text-gray-500">{task.description}</p>

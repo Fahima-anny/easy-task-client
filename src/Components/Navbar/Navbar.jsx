@@ -15,7 +15,7 @@ const Navbar = () => {
 const handleGoogleLogin = () => {
 googleLogin()
 .then(res => {
-  console.log(res.user.email);
+  // console.log(res.user.email);
   toast.success(`Welcome ${res.user.displayName}`, {
     position: "top-center",
     autoClose: 1000,
@@ -30,11 +30,11 @@ googleLogin()
   }
   axiosPublic.get(`/users?email=${res.user.email}`)
   .then(response => {
-    console.log(response.data);
+    // console.log(response.data);
     if(!response.data){
       axiosPublic.post("/users", userInfo)
-      .then(res => {
-        console.log(res);
+      .then(() => {
+        // console.log(res);
       })
       .catch(er => console.log(er))
     }
@@ -47,8 +47,8 @@ googleLogin()
 }
 const handleLogout = () => {
   signOutUser()
-.then(res => {
-  console.log(res);
+.then(() => {
+  // console.log(res);
   toast.success(`User Logged out`, {
     position: "top-center",
     autoClose: 1000,
