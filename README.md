@@ -17,8 +17,8 @@ Task Management Application is a real-time task management tool where users can 
 ### Backend:
 - **Node.js** – Server-side runtime
 - **Express.js** – Backend framework for API handling
-- **MongoDB (Mongoose)** – NoSQL database for task storage
-- **WebSockets / Change Streams** – Real-time task updates
+- **MongoDB (Atlas)** – NoSQL database for task storage
+- **MongoDB Real Time Update** – Real-time task updates
 
 ### Deployment:
 - **Frontend:** Firebase
