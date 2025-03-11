@@ -12,7 +12,7 @@ Task Management Application is a real-time task management tool where users can 
 - **React (Vite.js)** – Fast and optimized frontend framework
 - **Tailwind CSS** – Utility-first styling for a modern UI
 - **Firebase Authentication** – Secure user authentication
-- **React-Beautiful-DnD** – Drag-and-drop functionality for task management
+- **Hello Pangea-DnD** – Drag-and-drop functionality for task management
 
 ### Backend:
 - **Node.js** – Server-side runtime
