@@ -8,7 +8,7 @@ Task Management Application is a real-time task management tool where users can 
 
 ## 🛠️ Technologies Used
 
-### Frontend:
+### Frontend :
 - **React (Vite.js)** – Fast and optimized frontend framework
 - **Tailwind CSS** – Utility-first styling for a modern UI
 - **Firebase Authentication** – Secure user authentication
